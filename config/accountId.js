@@ -9,7 +9,7 @@ export const details = {
   isInterested: "Enviar presupuesto",
   quoteSentAt: "Presupuesto Enviado el",
   isClient: "Es cliente",
-  lastContactedAt: "Ultima vez cantactado"
+  lastContactedAt: "Última vez contactado"
 
 }
 
@@ -29,6 +29,13 @@ const columns_printer = [
 
 export const columns = { contacts: columns_contacts, printers: columns_printer };
 
+export const attemptColumns = [
+  { title: "Fecha", id: "insertedAt" },
+  { title: "Operador", id: "caller", capitalize: true },
+  { title: "Tipo", id: "type" },
+  { title: "Respondida", id: "answered" }
+];
+
 export const inputs = [
   { name: "firstName", type: "text", label: "Nombre", placeholder: "Ana" },
   { name: "lastName", type: "text", label: "Apellido(s)", placeholder: "Fernández Gómez" },
@@ -41,4 +48,17 @@ export const inputs = [
 export const selectors = [
   { id: "contacts", label: "Personas de contacto" },
   { id: "printers", label: "Impresoras" }
-]
+];
+
+export const attemptInputs = [
+  {
+    name: "type",
+    type: "text",
+    label: "Tipo de contacto",
+    placeholder: "Selecciona una opción",
+    enum: ["INIT", "FOLLOWUP", "LOYALTY"],
+    enumNames: ["Captación", "Seguimiento", "Fidelización"]
+  },
+  { name: "answered", type: "boolean", label: "¿Ha respondido?" },
+  { name: "comment", type: "text", label: "Comentario", placeholder: "Describe que ha pasado" }
+];

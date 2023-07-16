@@ -1,15 +1,14 @@
-import { useSearch } from "../lib/supabase";
-import { Button, Form } from "./index";
 import { useState } from "react";
 import { XIcon } from "@heroicons/react/solid";
+import { useSearch } from "../lib/supabase";
+import { Button, Form } from "./index";
 
 type Props = {
-  accountId: number;
   onSubmit: (printerId: string) => void;
 }
 
-export default function AddPrinterForm({ accountId, onSubmit }: Props) {
-  const [search, { data, loading }] = useSearch("table_printer");
+export default function AddPrinterForm({ onSubmit }: Props) {
+  const [search, { rows, loading }] = useSearch("table_printer");
   const [selected, setSelected] = useState(null);
 
   const handleSubmit = async ({ searchTerms }) => {
@@ -27,9 +26,9 @@ export default function AddPrinterForm({ accountId, onSubmit }: Props) {
         onSubmit={handleSubmit}
       >
         {loading && "Buscando..."}
-        {data && (
+        {rows && (
           <ul className="relative -top-4 max-h-36 overflow-x-auto shadow-xl">
-            {data.map(printer => (
+            {rows.map(printer => (
               <li
                 key={printer.id}
                 className="p-1 hover:bg-gray-50 cursor-pointer capitalize"
@@ -49,7 +48,7 @@ export default function AddPrinterForm({ accountId, onSubmit }: Props) {
             <XIcon className="h-5 w-5" onClick={() => setSelected(null)}/>
           </div>
           <div className="mt-4">
-            <Button onClick={() => onSubmit(selected.id)}>Guardar</Button>
+            <Button onClick={() => onSubmit(selected)}>Guardar</Button>
           </div>
         </div>
       )}

@@ -5,3 +5,7 @@
 .min-h-screen-with-bar {
     min-height: calc(100vh - 4rem);
 }
+
+.tooltip:hover span {
+    @apply visible z-50
+}

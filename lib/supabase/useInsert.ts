@@ -1,5 +1,6 @@
 import supabase, { reducer, TableName, TState } from "./index";
 import parseKeys, { EnumCaseType } from "../parseKeys";
+import { useReducer } from "react";
 
 type Rows = {
   [name: string]: string | number;
@@ -14,20 +15,28 @@ const initialState: TState = {
 };
 
 export default function useInsert(tableName: TableName): [TInsertFunc, TState] {
-  const [state, dispatch] = reducer(initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const insert = async (rows: Rows[]): Promise<void> => {
     dispatch({ type: "FETCHING" });
+
+    rows = rows.map(e => parseKeys(e, EnumCaseType.TO_SNAKE));
+
     const { data, error } = await supabase
       .from(tableName)
-      .insert(parseKeys(rows, EnumCaseType.TO_SNAKE));
+      .insert(rows);
 
     if (error) {
-      dispatch({ type: "FETCH_ERROR", payload: error });
+      dispatch({ type: "FETCH_ERROR", error });
       return;
     }
 
-    dispatch({ type: "FETCHED", payload: parseKeys(data, EnumCaseType.TO_CAMEL) });
+    dispatch({
+      type: "FETCHED",
+      payload: {
+        rows: data.map(e => parseKeys(e, EnumCaseType.TO_CAMEL))
+      }
+    });
   }
 
   return [insert, state];

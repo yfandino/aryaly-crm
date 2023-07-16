@@ -1,49 +1,32 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
-import { useQuery, useInsert } from "../../lib/supabase";
-import { Form, Modal, Snackbar, Table, Button } from "../../components";
 import { EyeIcon, TrashIcon } from "@heroicons/react/outline";
+import { useTable } from "../../lib/supabase";
+import { Form, Modal, Snackbar, Table, Button, LinearProgress } from "../../components";
+import { columns, inputs } from "../../config/account";
 
-const inputs = [
-  { name: "companyName", type: "text", label: "Nombre", placeholder: "Nombre" +
-    " de compañia o Autónomo"},
-  { name: "taxId", type: "text", label: "NIF / CIF", placeholder: "NIF" },
-  { name: "phoneNumber", type: "tel", label: "Teléfono", placeholder: "912000000" },
-  { name: "address", type: "text", label: "Dirección", placeholder: "Calle" +
-    " López de hoyos, 127, Local 1, Madrid" },
-  { name: "email", type: "email", label: "Correo electrónico", placeholder: "madrid.lopezdehoyos@prink.es" },
-];
-
-const columns = [
-  { title: "Nombre", id: "companyName" },
-  { title: "NIF/ CIF", id: "taxId" },
-  { title: "Teléfono(s)", id: "phoneNumber" },
-  { title: "Dirección", id: "address" },
-  { title: "email", id: "email" }
-];
-
-export default function Index() {
+export default function Accounts() {
+  const [error, setError] = useState(null);
   const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1)
   const [offset, setOffset] = useState((page - 1) * limit);
   const [open, setOpen] = useState(false);
-  const {
-    loading: queryIsLoading,
-    error: queryError,
-    rows,
-    count
-  } = useQuery("table_account", { offset, limit });
-  const [
-    insertAccount,
-    { loading: insertIsLoading,
-      data,
-      error: insertError
-    }] = useInsert("table_account");
+  const [{ loading, rows, count, error: tableError }, insertAccount, deleteRows] = useTable("table_account", {
+    queryParams: {
+      count: true,
+      offset,
+      limit
+    }
+  });
 
   useEffect(() => {
     setOffset((page - 1) * limit);
   }, [page, limit]);
+
+  useEffect(()=> {
+    setError(tableError);
+  }, [tableError])
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -54,13 +37,16 @@ export default function Index() {
     setOpen(false);
   }
 
-  if (queryIsLoading) return <div>Loading...</div>
+  const handleDelete = async (account) => {
+    await deleteRows([["id", account.id]]);
+  }
 
   return (
     <>
       <Head>
         <title>Store manager - Cuentas</title>
       </Head>
+      {loading && <LinearProgress />}
       <main>
         <Table
           title="Cuentas"
@@ -71,8 +57,7 @@ export default function Index() {
           count={count}
           page={page}
           onPagination={setPage}
-          selectable
-          actionColumn={<TableActions />}
+          actionComponent={<TableActions onDelete={handleDelete} showEye/>}
         />
       </main>
       <Modal open={open} handleClose={handleClose} fullScreen>
@@ -82,37 +67,38 @@ export default function Index() {
           onSubmit={handleSubmit}
         />
       </Modal>
-      {insertError && (
+      {error && (
         <Snackbar
           title="Ops, ha ocurrido un error"
           type="error"
-          message={insertError.message}
+          message={["Código: " + error.code, error.message]}
           delay={10}
-        />
-      )}
-      {queryError && (
-        <Snackbar
-          title="Ops, ha ocurrido un error"
-          type="error"
-          message={queryError.message}
-          delay={10}
+          onFinish={setError}
         />
       )}
     </>
   );
+};
+
+type TableActionsProps = {
+  row?: { [name: string]: any },
+  onDelete?: (any) => void;
+  showEye?: boolean;
 }
 
-function TableActions(row) {
+function TableActions({ row, onDelete, showEye }: TableActionsProps) {
   return (
     <div className="inline-flex px-4">
-      <button onClick={() => console.log(row)} className="p-2 mx-1 hover:bg-gray-100 rounded-full focus:outline-none">
+      <button onClick={() => onDelete(row)} className="p-2 mx-1 hover:bg-gray-100 rounded-full focus:outline-none">
         <TrashIcon className="w-5 h-5" />
       </button>
-      <Link href={`/accounts/${row.id}`}>
-        <a className="p-2 mx-1 hover:bg-gray-100 rounded-full">
-          <EyeIcon className="w-5 h-5" />
-        </a>
-      </Link>
+      {showEye && (
+        <Link href={`/accounts/${row.id}`}>
+          <a className="p-2 mx-1 hover:bg-gray-100 rounded-full">
+            <EyeIcon className="w-5 h-5" />
+          </a>
+        </Link>
+      )}
     </div>
   );
 }

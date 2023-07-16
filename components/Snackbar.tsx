@@ -1,24 +1,31 @@
 import { Portal } from "./index";
 import { ExclamationCircleIcon, XIcon } from "@heroicons/react/outline";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 type SnackBarProps = {
   title: string;
   type?: "error" | "success" | "warning";
   message?: string | string[];
   delay?: number;
+  onFinish?: Dispatch<SetStateAction<null>>;
 }
 
-export default function Snackbar({ title, type, message, delay = 5 }: SnackBarProps) {
+export default function Snackbar({ title, type, message, delay = 5, onFinish }: SnackBarProps) {
   const [open, setOpen] = useState(true);
   let background, titleColor, iconColor, messageColor;
 
   useEffect(() => {
-    const timeout = setTimeout(() => setOpen(false), delay * 1000);
+    const timeout = setTimeout(() => onClose(), delay * 1000);
+
     return () => {
-      clearTimeout(timeout);
+      clearTimeout(timeout)
     };
   }, []);
+
+  const onClose = () => {
+    setOpen(false);
+    if (typeof onFinish === "function") onFinish(null);
+  };
 
   switch (type) {
     case "error": {
@@ -50,12 +57,10 @@ export default function Snackbar({ title, type, message, delay = 5 }: SnackBarPr
     }
   }
 
-  const onClose = () => setOpen(false);
-
   if (!open) return null;
 
   return (
-    <Portal>
+    <Portal key={Math.random()}>
       <div className={`py-4 px-5 min-w-min fixed bottom-4 rounded left-1/2 transform -translate-x-1/2 ${background}`}>
         <div className="flex flex-row items-center gap-3">
           <ExclamationCircleIcon className={`${iconColor} w-5 h-5`} />
@@ -70,7 +75,7 @@ export default function Snackbar({ title, type, message, delay = 5 }: SnackBarPr
               {Array.isArray(message)
                 ? (
                   <ul className="list-disc list-inside">
-                    {message.map(m => (<li key={m}>{m}</li>))}
+                    {message.map((m, i) => (<li key={m}>{m}</li>))}
                   </ul>
                 )
                 : (

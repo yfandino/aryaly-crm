@@ -1,6 +1,10 @@
 import { Button } from "./index";
 import { details } from "../config/accountId";
 
+type Props = {
+  data: { [name: string]: any}
+}
+
 export default function AccountDetails({ data }) {
   return (
     <div className="max-w-full mx-auto sm:px-6 lg:px-8 mb-4">

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useReducer } from "react";
 import supabase, { reducer, TableName, TState } from "./index";
 import parseKeys, { EnumCaseType } from "../parseKeys";
+import { Row, Tuple } from "./types";
 
 type Config = {
   offset?: number;
   limit?: number;
   columns?: string;
-  filter?: { [name: string]: any }
+  filter?: Tuple[];
+  count?: boolean
 }
 
 const initialState: TState = {
@@ -17,61 +19,51 @@ const initialState: TState = {
 };
 
 export default function useQuery(tableName: TableName, config?: Config) {
-  const [state, dispatch] = reducer(initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const { columns = "*", offset, limit, filter } = config;
-
-  const queryWithFilters = useCallback(async () => {
-    return supabase
-      .from(tableName)
-      .select(columns, { count: "exact"})
-      .eq(filter.key, filter.value);
-  }, [tableName, columns, offset, limit]);
+  const { columns = "*", offset, limit, filter, count } = config;
 
   const query = useCallback(async () => {
-    return supabase
-      .from(tableName)
-      .select(columns, { count: "exact"})
-      .range(offset, offset + limit);
-  }, [tableName, columns, offset, limit]);
+    let filterBuilder = supabase
+      .from<Row>(tableName)
+      .select(columns, count ? { count: "exact"} : {});
+
+    if (filter) {
+      filter.map(tuple => {
+        const [key, value] = tuple;
+        filterBuilder = filterBuilder
+          .eq(key, value);
+      });
+    }
+
+    if (offset && limit) {
+      filterBuilder = filterBuilder
+        .range(offset, offset + limit);
+    }
+
+    return filterBuilder
+  }, [tableName, columns, offset, limit, count]);
 
   useEffect(() => {
     let cancelRequest = false;
     dispatch({ type: "FETCHING" });
 
-    if (filter) {
-      queryWithFilters()
-        .then(({ data, count }) => {
-          if (cancelRequest) return;
-          dispatch({
-            type: "QUERY_FETCHED",
-            payload: {
-              rows: parseKeys(data, EnumCaseType.TO_CAMEL),
-              count
-            }
-          });
-        })
-        .catch(payload => {
-          if (cancelRequest) return;
-          dispatch({ type: "FETCH_ERROR", payload });
+    query()
+      .then(({ data, count }) => {
+        if (cancelRequest) return;
+
+        dispatch({
+          type: "FETCHED",
+          payload: {
+            rows: data.map(e => parseKeys(e, EnumCaseType.TO_CAMEL)),
+            count
+          }
         });
-    } else {
-      query()
-        .then(({ data, count }) => {
-          if (cancelRequest) return;
-          dispatch({
-            type: "QUERY_FETCHED",
-            payload: {
-              rows: parseKeys(data, EnumCaseType.TO_CAMEL),
-              count
-            }
-          });
-        })
-        .catch(payload => {
-          if (cancelRequest) return;
-          dispatch({ type: "FETCH_ERROR", payload });
-        });
-    }
+      })
+      .catch(error => {
+        if (cancelRequest) return;
+        dispatch({ type: "FETCH_ERROR", error });
+      });
 
     return function cleanUp() {
       cancelRequest = true;

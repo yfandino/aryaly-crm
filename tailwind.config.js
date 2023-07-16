@@ -14,6 +14,20 @@ module.exports = {
       },
       flex: {
         "noshrink-nogrow-25": "0 0 25%"
+      },
+      keyframes: {
+        "loading-first": {
+          '0%': { left: "-100%", width: "80%" },
+          '100%': { left: "100%", width: "10%" },
+        },
+        "loading-second": {
+          '0%': { left: "-150%", width: "80%" },
+          '100%': { left: "100%", width: "10%" },
+        }
+      },
+      animation: {
+        "loading-first": 'loading-first 1.5s ease-out infinite',
+        "loading-second": 'loading-second 1.5s ease-in infinite'
       }
     },
   },

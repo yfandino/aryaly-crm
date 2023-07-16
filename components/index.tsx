@@ -1,3 +1,4 @@
+export { default as AccountAssets } from "./AccountAssets";
 export { default as AccountDetails } from "./AccountDetails";
 export { default as AddPrinterForm } from "./AddPrinterForm";
 export { default as Breadcrumbs } from "./Breadcrumbs";
@@ -6,6 +7,7 @@ export { default as Button } from "./Button";
 export {default as FloatButton } from "./FloatButton";
 export {default as Form } from "./Form";
 export {default as Header } from "./Header";
+export {default as LinearProgress } from "./LinearProgress";
 export {default as Modal } from "./Modal";
 export {default as Nav } from "./Nav";
 export {default as Page } from "./Page";
